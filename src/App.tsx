@@ -84,7 +84,7 @@ function RSI(data: Candle[], len = 14) {
 }
 
 // ---- Chart component ----
-function ChartPane({ data, overlays, theme }:{ data: Candle[], overlays: { sma?: number, ema?: number }, theme: 'light'|'dark' }) {
+function ChartPane({ symbol, tf, data, overlays, theme }:{ symbol:string, tf:string, data: Candle[], overlays: { sma?: number, ema?: number }, theme: 'light'|'dark' }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const volRef = useRef<HTMLDivElement | null>(null);
   const rsiRef = useRef<HTMLDivElement | null>(null);
@@ -144,6 +144,9 @@ function ChartPane({ data, overlays, theme }:{ data: Candle[], overlays: { sma?:
     };
   }, [theme]);
 
+  const shouldFit = useRef(true);
+  useEffect(() => { shouldFit.current = true; }, [symbol, tf]);
+
   useEffect(() => {
     if (!data.length || !candleSeriesRef.current) return;
     candleSeriesRef.current.setData(data.map(d => ({ time: d.time, open: d.open, high: d.high, low: d.low, close: d.close })));
@@ -152,7 +155,10 @@ function ChartPane({ data, overlays, theme }:{ data: Candle[], overlays: { sma?:
     if (overlays.sma) smaSeriesRef.current?.setData(SMA(data, overlays.sma).map(d => ({ time: d.time, value: d.value })));
     if (overlays.ema) emaSeriesRef.current?.setData(EMA(data, overlays.ema).map(d => ({ time: d.time, value: d.value })));
     rsiSeriesRef.current?.setData(RSI(data, 14).map(d => ({ time: d.time, value: d.value })));
-    chartRef.current?.timeScale().fitContent();
+    if (shouldFit.current) {
+      chartRef.current?.timeScale().fitContent();
+      shouldFit.current = false;
+    }
   }, [data, overlays]);
 
   return (
@@ -198,9 +204,9 @@ function App() {
     finally { setLoading(false); }
   }
   useEffect(() => { load(); }, [symbol, tf]);
-  // refresh every 15s
+  // refresh every second
   useEffect(() => {
-    const id = setInterval(() => load(), 15000);
+    const id = setInterval(() => load(), 1000);
     return () => clearInterval(id);
   }, [symbol, tf]);
 
@@ -393,7 +399,7 @@ function App() {
                 {err && <span className="text-sm text-red-500">{String(err)}</span>}
               </div>
             </div>
-            <ChartPane data={data} overlays={{ sma: 20, ema: 50 }} theme={theme} />
+            <ChartPane symbol={symbol} tf={tf} data={data} overlays={{ sma: 20, ema: 50 }} theme={theme} />
           </div>
 
           <div className="text-sm text-zinc-500 dark:text-zinc-400">
