@@ -92,10 +92,11 @@ function ChartPane({ data, overlays, theme }:{ data: Candle[], overlays: { sma?:
   const volChartRef = useRef<any>(null);
   const rsiChartRef = useRef<any>(null);
   const candleSeriesRef = useRef<any>(null);
-  const volSeriesRef = useRef<any>(null);
-  const smaSeriesRef = useRef<any>(null);
-  const emaSeriesRef = useRef<any>(null);
-  const rsiSeriesRef = useRef<any>(null);
+    const volSeriesRef = useRef<any>(null);
+    const smaSeriesRef = useRef<any>(null);
+    const emaSeriesRef = useRef<any>(null);
+    const rsiSeriesRef = useRef<any>(null);
+    const initRef = useRef(true);
 
   useEffect(() => {
     if (!ref.current || !volRef.current || !rsiRef.current) return;
@@ -146,13 +147,22 @@ function ChartPane({ data, overlays, theme }:{ data: Candle[], overlays: { sma?:
 
   useEffect(() => {
     if (!data.length || !candleSeriesRef.current) return;
-    candleSeriesRef.current.setData(data.map(d => ({ time: d.time, open: d.open, high: d.high, low: d.low, close: d.close })));
-    volSeriesRef.current?.setData(data.map(d => ({ time: d.time, value: d.volume, color: d.close >= d.open ? '#10b981' : '#ef4444' })));
-    // overlays
-    if (overlays.sma) smaSeriesRef.current?.setData(SMA(data, overlays.sma).map(d => ({ time: d.time, value: d.value })));
-    if (overlays.ema) emaSeriesRef.current?.setData(EMA(data, overlays.ema).map(d => ({ time: d.time, value: d.value })));
-    rsiSeriesRef.current?.setData(RSI(data, 14).map(d => ({ time: d.time, value: d.value })));
-    chartRef.current?.timeScale().fitContent();
+    const last = data[data.length - 1];
+    if (initRef.current) {
+      candleSeriesRef.current.setData(data.map(d => ({ time: d.time, open: d.open, high: d.high, low: d.low, close: d.close })));
+      volSeriesRef.current?.setData(data.map(d => ({ time: d.time, value: d.volume, color: d.close >= d.open ? '#10b981' : '#ef4444' })));
+      if (overlays.sma) smaSeriesRef.current?.setData(SMA(data, overlays.sma).map(d => ({ time: d.time, value: d.value })));
+      if (overlays.ema) emaSeriesRef.current?.setData(EMA(data, overlays.ema).map(d => ({ time: d.time, value: d.value })));
+      rsiSeriesRef.current?.setData(RSI(data, 14).map(d => ({ time: d.time, value: d.value })));
+      chartRef.current?.timeScale().fitContent();
+      initRef.current = false;
+    } else {
+      candleSeriesRef.current.update({ time: last.time, open: last.open, high: last.high, low: last.low, close: last.close });
+      volSeriesRef.current?.update({ time: last.time, value: last.volume, color: last.close >= last.open ? '#10b981' : '#ef4444' });
+      if (overlays.sma) smaSeriesRef.current?.setData(SMA(data, overlays.sma).map(d => ({ time: d.time, value: d.value })));
+      if (overlays.ema) emaSeriesRef.current?.setData(EMA(data, overlays.ema).map(d => ({ time: d.time, value: d.value })));
+      rsiSeriesRef.current?.setData(RSI(data, 14).map(d => ({ time: d.time, value: d.value })));
+    }
   }, [data, overlays]);
 
   return (
@@ -189,18 +199,31 @@ function App() {
   useEffect(() => { LS.set('tc.qty', qty); }, [qty]);
 
   // fetch data
-  async function load() {
-    setLoading(true); setErr(null);
+  async function load(init = false) {
+    if (init) setLoading(true);
+    setErr(null);
     try {
-      const d = await fetchKlines(symbol, TF_TO_BINANCE[tf], 600);
-      setData(d);
+      const d = await fetchKlines(symbol, TF_TO_BINANCE[tf], init ? 600 : 2);
+      setData(prev => {
+        if (init || !prev.length) return d;
+        const last = d[d.length - 1];
+        const copy = [...prev];
+        const prevLast = copy[copy.length - 1];
+        if (!prevLast || last.time > prevLast.time) {
+          copy.push(last);
+          if (copy.length > 600) copy.shift();
+        } else {
+          copy[copy.length - 1] = last;
+        }
+        return copy;
+      });
     } catch(e:any) { setErr(e.message || 'Failed to load'); }
-    finally { setLoading(false); }
+    finally { if (init) setLoading(false); }
   }
-  useEffect(() => { load(); }, [symbol, tf]);
-  // refresh every 15s
+  useEffect(() => { load(true); }, [symbol, tf]);
+  // refresh every second
   useEffect(() => {
-    const id = setInterval(() => load(), 15000);
+    const id = setInterval(() => load(false), 1000);
     return () => clearInterval(id);
   }, [symbol, tf]);
 
@@ -393,7 +416,7 @@ function App() {
                 {err && <span className="text-sm text-red-500">{String(err)}</span>}
               </div>
             </div>
-            <ChartPane data={data} overlays={{ sma: 20, ema: 50 }} theme={theme} />
+              <ChartPane key={symbol+tf} data={data} overlays={{ sma: 20, ema: 50 }} theme={theme} />
           </div>
 
           <div className="text-sm text-zinc-500 dark:text-zinc-400">
