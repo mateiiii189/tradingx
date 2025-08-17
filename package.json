@@ -1,0 +1,24 @@
+{
+  "name": "tradechart",
+  "version": "1.0.0",
+  "private": true,
+  "description": "No-build React + Tailwind + Lightweight Charts trading app (CDN)",
+  "scripts": {
+    "dev": "npx serve .",
+    "lint": "echo 'no lint configured'"
+  },
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "lightweight-charts": "^5.0.8",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "typescript": "^5.9.2"
+  }
+}

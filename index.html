@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TradeChart — Lightweight Trading Platform</title>
+    <meta name="description" content="TradeChart: a lightweight, TradingView‑style charting and paper‑trading web app." />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { darkMode: 'class' };
+    </script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+    <style>
+      html, body, #root {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      .card { @apply rounded-2xl shadow-lg p-4 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800; }
+      .btn { @apply rounded-xl px-3 py-2 border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800; }
+      .btn-primary { @apply bg-blue-600 text-white border-blue-600 hover:bg-blue-700; }
+      .input { @apply rounded-xl px-3 py-2 border w-full border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900; }
+      .select { @apply rounded-xl px-3 py-2 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900; }
+      .label { @apply text-sm text-zinc-500 dark:text-zinc-400; }
+      input::placeholder, select::placeholder {
+        color: #a1a1aa;
+      }
+    </style>
+  </head>
+  <body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div id="root"></div>
+    <script type="text/babel" data-type="module" data-presets="typescript,react" src="./src/App.tsx"></script>
+  </body>
+</html>
