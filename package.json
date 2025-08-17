@@ -5,16 +5,21 @@
   "description": "No-build React + Tailwind + Lightweight Charts trading app (CDN)",
   "scripts": {
     "dev": "npx serve .",
-    "lint": "echo 'no lint configured'"
+    "lint": "echo 'no lint configured'",
+    "server": "node server.js"
   },
   "main": "index.js",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^5.1.1",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
     "lightweight-charts": "^5.0.8",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "@types/react": "^19.1.10",

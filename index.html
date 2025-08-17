@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>TradeChart — Lightweight Trading Platform</title>
     <meta name="description" content="TradeChart: a lightweight, TradingView‑style charting and paper‑trading web app." />
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,14 +19,57 @@
         height: 100%;
         margin: 0;
         padding: 0;
-        overflow: hidden;
       }
-      .card { @apply rounded-2xl shadow-lg p-4 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800; }
-      .btn { @apply rounded-xl px-3 py-2 border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800; }
-      .btn-primary { @apply bg-blue-600 text-white border-blue-600 hover:bg-blue-700; }
-      .input { @apply rounded-xl px-3 py-2 border w-full border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900; }
-      .select { @apply rounded-xl px-3 py-2 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900; }
-      .label { @apply text-sm text-zinc-500 dark:text-zinc-400; }
+      html, body {
+        overflow-x: hidden;
+      }
+      .card {
+        border-radius: 1rem;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        padding: 1rem;
+        background-color: #ffffff;
+        border: 1px solid #f4f4f5;
+      }
+      .dark .card {
+        background-color: #18181b;
+        border-color: #27272a;
+      }
+      .btn,
+      .btn-primary {
+        border-radius: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d4d4d8;
+        cursor: pointer;
+      }
+      .btn:hover { background-color: #f4f4f5; }
+      .dark .btn { border-color: #3f3f46; color: #e4e4e7; }
+      .dark .btn:hover { background-color: #27272a; }
+      .btn-primary {
+        background-color: #2563eb;
+        border-color: #2563eb;
+        color: #ffffff;
+      }
+      .btn-primary:hover { background-color: #1d4ed8; }
+      .input,
+      .select {
+        border-radius: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d4d4d8;
+        background-color: #ffffff;
+        width: 100%;
+        color: #0a0a0a;
+      }
+      .dark .input,
+      .dark .select {
+        border-color: #3f3f46;
+        background-color: #18181b;
+        color: #e4e4e7;
+      }
+      .label {
+        font-size: 0.875rem;
+        color: #71717a;
+      }
+      .dark .label { color: #a1a1aa; }
       input::placeholder, select::placeholder {
         color: #a1a1aa;
       }
