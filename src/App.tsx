@@ -243,6 +243,7 @@ function App() {
     } catch(e:any) { setErr(e.message || 'Failed to load'); }
     finally { setLoading(false); }
   }
+
   useEffect(() => {
     load();
     const stream = `${symbol.toLowerCase()}@kline_${TF_TO_BINANCE[tf]}`;
@@ -273,6 +274,13 @@ function App() {
       });
     };
     return () => ws.close();
+
+  useEffect(() => { load(); }, [symbol, tf]);
+  // refresh every second
+  useEffect(() => {
+    const id = setInterval(() => load(), 1000);
+    return () => clearInterval(id);
+
   }, [symbol, tf]);
 
   const last = data.at(-1)?.close ?? 0;
