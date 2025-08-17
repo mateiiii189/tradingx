@@ -105,9 +105,10 @@ function ChartPane({ symbol, tf, data, overlays, theme }:{ symbol:string, tf:str
       rightPriceScale: { borderColor: theme === 'dark' ? '#3f3f46' : '#d4d4d8' },
       timeScale: { borderColor: theme === 'dark' ? '#3f3f46' : '#d4d4d8' }
     };
-    const chart = LightweightCharts.createChart(ref.current!, { height: 420, ...opts });
-    const volChart = LightweightCharts.createChart(volRef.current!, { height: 120, ...opts });
-    const rsiChart = LightweightCharts.createChart(rsiRef.current!, { height: 140, ...opts });
+    const w = ref.current!.clientWidth;
+    const chart = LightweightCharts.createChart(ref.current!, { width: w, height: 420, ...opts });
+    const volChart = LightweightCharts.createChart(volRef.current!, { width: w, height: 120, ...opts });
+    const rsiChart = LightweightCharts.createChart(rsiRef.current!, { width: w, height: 140, ...opts });
 
     chartRef.current = chart;
     volChartRef.current = volChart;
@@ -172,8 +173,46 @@ function ChartPane({ symbol, tf, data, overlays, theme }:{ symbol:string, tf:str
   );
 }
 
+function Auth({ onAuth }:{ onAuth:(t:string)=>void }) {
+  const [mode, setMode] = useState<'login'|'register'>('login');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [err, setErr] = useState<string|null>(null);
+  async function submit(e:any) {
+    e.preventDefault();
+    setErr(null);
+    try {
+      const res = await fetch(`/api/${mode}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
+      const js = await res.json();
+      if (!res.ok) throw new Error(js.error || 'Request failed');
+      onAuth(js.token);
+    } catch(e:any) { setErr(e.message); }
+  }
+  return (
+    <div className="h-full flex items-center justify-center">
+      <form onSubmit={submit} className="card w-80 space-y-3">
+        <h2 className="text-xl font-semibold">{mode==='login'?'Login':'Register'}</h2>
+        <input className="input" placeholder="Username" value={username} onChange={e=>setUsername(e.target.value)} />
+        <input type="password" className="input" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} />
+        {err && <div className="text-sm text-red-500">{err}</div>}
+        <button className="btn-primary w-full" type="submit">{mode==='login'?'Login':'Register'}</button>
+        <div className="text-sm text-center">
+          {mode==='login' ? (
+            <button type="button" className="text-blue-500" onClick={()=>setMode('register')}>Need an account? Register</button>
+          ) : (
+            <button type="button" className="text-blue-500" onClick={()=>setMode('login')}>Have an account? Login</button>
+          )}
+        </div>
+      </form>
+    </div>
+  );
+}
+
 // ---- Main App ----
 function App() {
+  const [token, setToken] = useState<string>(LS.get('tc.token', ''));
+  if (!token) return <Auth onAuth={t => { LS.set('tc.token', t); setToken(t); }} />;
+
   const [symbol, setSymbol] = useState(LS.get('tc.symbol', 'BTCUSDT'));
   const [tf, setTf] = useState(LS.get('tc.tf', '1h'));
   const [theme, setTheme] = useState<'light'|'dark'>(LS.get('tc.theme', 'dark'));
@@ -184,6 +223,7 @@ function App() {
   const [orders, setOrders] = useState<Order[]>(LS.get('tc.orders', []));
   const [positions, setPositions] = useState<Position[]>(LS.get('tc.pos', []));
   const [qty, setQty] = useState<number>(LS.get('tc.qty', 0.001));
+  const wsRef = useRef<WebSocket | null>(null);
 
   // persist
   useEffect(() => { LS.set('tc.symbol', symbol); }, [symbol]);
@@ -203,11 +243,44 @@ function App() {
     } catch(e:any) { setErr(e.message || 'Failed to load'); }
     finally { setLoading(false); }
   }
+
+  useEffect(() => {
+    load();
+    const stream = `${symbol.toLowerCase()}@kline_${TF_TO_BINANCE[tf]}`;
+    const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${stream}`);
+    wsRef.current = ws;
+    ws.onmessage = ev => {
+      const m = JSON.parse(ev.data);
+      if (!m.k) return;
+      const k = m.k;
+      const c: Candle = {
+        time: Math.floor(k.t / 1000),
+        open: parseFloat(k.o),
+        high: parseFloat(k.h),
+        low: parseFloat(k.l),
+        close: parseFloat(k.c),
+        volume: parseFloat(k.v)
+      };
+      setData(d => {
+        const copy = d.slice();
+        const last = copy[copy.length - 1];
+        if (last && last.time === c.time) {
+          copy[copy.length - 1] = c;
+        } else {
+          copy.push(c);
+          if (copy.length > 600) copy.shift();
+        }
+        return copy;
+      });
+    };
+    return () => ws.close();
+
   useEffect(() => { load(); }, [symbol, tf]);
   // refresh every second
   useEffect(() => {
     const id = setInterval(() => load(), 1000);
     return () => clearInterval(id);
+
   }, [symbol, tf]);
 
   const last = data.at(-1)?.close ?? 0;
@@ -271,10 +344,10 @@ function App() {
             <select className="select" value={tf} onChange={e => setTf(e.target.value)}>
               {Object.keys(TF).map(k => <option key={k} value={k}>{k}</option>)}
             </select>
-            <button className="btn" onClick={() => load()}>{isLoading ? 'Loading…' : 'Refresh'}</button>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <button className="btn" onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? '🌙' : '☀️'}</button>
+            <button className="btn" onClick={() => { setToken(''); LS.set('tc.token',''); }}>Logout</button>
             <a className="btn" href="https://binance.com" target="_blank" rel="noreferrer">Data: Binance</a>
           </div>
         </div>
